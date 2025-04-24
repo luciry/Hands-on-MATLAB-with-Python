@@ -1,0 +1,6 @@
+flask==2.2.3
+werkzeug==2.2.3
+numpy>=1.24.0
+matplotlib>=3.7.0
+waitress
+

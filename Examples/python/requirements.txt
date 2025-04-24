@@ -1,0 +1,4 @@
+# Example requirements for Python scripts
+numpy
+matplotlib
+scipy
