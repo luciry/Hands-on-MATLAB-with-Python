@@ -172,11 +172,33 @@ def animation_endpoint():
         return jsonify({
             'status': 'success',
             'frames': result.get('frames'),
-            'thumbnail': result.get('thumbnail'),
-            'title': result.get('title'),
-            'description': result.get('description'),
-            'num_frames': result.get('num_frames'),
-            'source_code': result.get('source_code')
+            'source_code': result.get('source_code'),
+            'animation_type': result.get('animation_type')
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        })
+
+@app.route('/matrix_operation', methods=['POST'])
+def matrix_operation():
+    try:
+        # Get parameters from the request
+        data = request.json
+        
+        # Call the function through our bridge
+        result = call_matlab_function('matrix_operation', data)
+        
+        # Return the result
+        return jsonify({
+            'status': 'success',
+            'plot': result.get('plot'),
+            'source_code': result.get('source_code'),
+            'operation_info': {
+                'title': result.get('operation_title', data.get('operation_type', 'Matrix Operation')),
+                'details': result.get('operation_details', '')
+            }
         })
     except Exception as e:
         return jsonify({

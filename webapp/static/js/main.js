@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Animation
     setupAnimation();
     
+    // Matrix Operations
+    setupMatrixOperations();
+    
     // Toggle between result and code views
     setupResultCodeToggles();
 });
@@ -521,4 +524,73 @@ function setupAnimation() {
                 if (loadingEl) loadingEl.style.display = 'none';
             });
     });
+}
+
+// Setup Matrix Operations
+function setupMatrixOperations() {
+    document.getElementById('matrixOperationBtn').addEventListener('click', function() {
+        generateMatrixOperation(false);
+    });
+    
+    document.getElementById('matlabMatrixOperationBtn').addEventListener('click', function() {
+        generateMatrixOperation(true);
+    });
+}
+
+function generateMatrixOperation(useMatlab) {
+    // Show loading spinner
+    document.getElementById('matrixLoading').style.display = 'block';
+    document.getElementById('matrixResult').style.display = 'none';
+    
+    // Get parameters
+    const params = {
+        operation_type: document.getElementById('operationType').value,
+        matrix_size: parseInt(document.getElementById('matrixSize').value),
+        random_seed: parseInt(document.getElementById('randomSeed').value)
+    };
+    
+    // Determine endpoint and request data
+    let endpoint = useMatlab ? '/matlab_plot' : '/matrix_operation';
+    let requestData = useMatlab ? 
+        { function: 'matrix_operation', params: params } : 
+        params;
+    
+    // Send request
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Hide loading indicator
+            document.getElementById('matrixLoading').style.display = 'none';
+            
+            // Display result
+            if (data.plot) {
+                const resultImage = document.getElementById('matrixResult');
+                resultImage.src = 'data:image/png;base64,' + data.plot;
+                resultImage.style.display = 'block';
+            }
+            
+            // Display matrix information
+            if (data.operation_info) {
+                document.getElementById('matrixOperationTitle').textContent = data.operation_info.title || params.operation_type;
+                document.getElementById('matrixInfoText').textContent = data.operation_info.details || '';
+                document.getElementById('matrixInfo').style.display = 'block';
+            }
+            
+            // Update code if available
+            if (data.source_code) {
+                document.getElementById('matrixCode').textContent = data.source_code;
+                hljs.highlightElement(document.getElementById('matrixCode'));
+            }
+        } else {
+            throw new Error(data.message || 'Unknown error');
+        }
+    })
+    .catch(handleApiError);
 } 
