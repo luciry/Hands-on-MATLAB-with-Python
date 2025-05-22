@@ -96,8 +96,11 @@ function result = symbolic_math(params)
                 ylabel('y');
                 grid on;
                 
-                % Save plot to file
-                saveas(gcf, params.plot_path);
+                % Save plot to file using exportgraphics (better PNG support)
+                exportgraphics(gcf, params.plot_path, 'Resolution', 150);
+                
+                % Close the figure to free memory
+                close(gcf);
                 
                 % Read back the file and encode as base64
                 fid = fopen(params.plot_path, 'rb');

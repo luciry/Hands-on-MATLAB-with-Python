@@ -656,9 +656,13 @@ function setupSymbolicMath() {
                 
                 // Display plot if available
                 if (data.plot && operation === 'plot') {
-                    plotContainer.style.display = 'flex';
-                    plotImg.src = 'data:image/png;base64,' + data.plot;
-                }
+    plotContainer.style.display = 'flex';
+    if (typeof data.plot === 'string' && data.plot.startsWith('/static/')) {
+        plotImg.src = data.plot;
+    } else {
+        plotImg.src = 'data:image/png;base64,' + data.plot;
+    }
+}
             } else {
                 resultEl.style.display = 'block';
                 resultTextEl.innerHTML = `<div class="alert alert-danger">\n                    <strong>Error:</strong> ${data.message || 'An error occurred while processing your request.'}\n                </div>`;

@@ -154,8 +154,13 @@ def call_matlab_function(function_name, params=None):
                     print(f"Result attributes: {[attr for attr in dir(result) if not attr.startswith('_')]}")
                     print(f"Raw symbolic_math result keys: {dict(result).keys() if isinstance(result, dict) else 'Not a dict'}")
                     
-                    # For symbolic math, just return the result dict as-is
+                    # For symbolic math, print debug info about plot
                     if isinstance(result, dict):
+                        if 'plot' in result and isinstance(result['plot'], str):
+                            print(f"MATLAB symbolic_math plot length: {len(result['plot'])}")
+                            print(f"MATLAB symbolic_math plot preview: {result['plot'][:100]}")
+                            # Sanitize base64 string
+                            result['plot'] = result['plot'].replace('\n', '').replace('\r', '').strip()
                         return result
                     else:
                         # If not a dict, try to convert to dict (for MATLAB struct)
