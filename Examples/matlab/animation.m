@@ -16,15 +16,19 @@ function result = animation(animation_type, num_frames)
     fprintf('Animation starting: type=%s, frames=%d\n', animation_type, num_frames);
     
     % Ensure output directory exists for frames
-    temp_dir = fullfile(tempdir, 'matlab_animation');
-    fprintf('Using temp directory: %s\n', temp_dir);
-    if ~exist(temp_dir, 'dir')
-        mkdir(temp_dir);
-        fprintf('Created temp directory\n');
+    % First, figure out the Flask static directory relative to the Examples/matlab directory
+    current_script_dir = fileparts(mfilename('fullpath'));
+    project_root = fileparts(fileparts(current_script_dir)); % Go up two levels from Examples/matlab
+    static_dir = fullfile(project_root, 'webapp', 'static', 'animation');
+    
+    fprintf('Using static directory: %s\n', static_dir);
+    if ~exist(static_dir, 'dir')
+        mkdir(static_dir);
+        fprintf('Created static directory\n');
     end
     
     % Clean any existing files
-    delete(fullfile(temp_dir, '*.png'));
+    delete(fullfile(static_dir, '*.png'));
     fprintf('Cleaned existing files\n');
     
     % List to store frame filenames
@@ -96,7 +100,7 @@ function result = animation(animation_type, num_frames)
                 text(-1.1, -1.1, sprintf('Frame %d/%d', i, num_frames), 'FontSize', 10);
                 
                 % Save the frame
-                frame_filename = fullfile(temp_dir, sprintf('frame_%03d.png', i));
+                frame_filename = fullfile(static_dir, sprintf('frame_%03d.png', i));
                 frames{i} = frame_filename;
                 print(fig, frame_filename, '-dpng', '-r100');
             end
@@ -196,7 +200,7 @@ function result = animation(animation_type, num_frames)
                 ylabel('Amplitude');
                 
                 % Save the frame
-                frame_filename = fullfile(temp_dir, sprintf('frame_%03d.png', i));
+                frame_filename = fullfile(static_dir, sprintf('frame_%03d.png', i));
                 frames{i} = frame_filename;
                 print(fig, frame_filename, '-dpng', '-r100');
             end
@@ -306,7 +310,7 @@ function result = animation(animation_type, num_frames)
                 text(-a*(1+e)*1.1, -a*(1+e)*1.1, sprintf('Frame %d/%d', i, num_frames), 'FontSize', 10);
                 
                 % Save the frame
-                frame_filename = fullfile(temp_dir, sprintf('frame_%03d.png', i));
+                frame_filename = fullfile(static_dir, sprintf('frame_%03d.png', i));
                 frames{i} = frame_filename;
                 print(fig, frame_filename, '-dpng', '-r100');
             end
@@ -344,8 +348,63 @@ function result = animation(animation_type, num_frames)
             result.title = 'Planetary Orbit';
             result.description = sprintf('Elliptical orbit with semi-major axis %.1f and eccentricity %.1f', a, e);
             
+        case 'lissajous'
+            % Lissajous curve animation
+            t = linspace(0, 2*pi, 1000);
+            a = 3;  % Frequency ratio (x-axis)
+            b = 4;  % Frequency ratio (y-axis)
+            
+            % Phase varies with frame
+            delta = linspace(0, pi, num_frames);
+            
+            % Create frames
+            for i = 1:num_frames
+                x = sin(a*t + delta(i));
+                y = sin(b*t);
+                
+                % Plot
+                clf;
+                plot(x, y, 'g-', 'LineWidth', 2);
+                axis([-1.2 1.2 -1.2 1.2]);
+                grid on;
+                axis equal;
+                title(sprintf('Lissajous Curve (Phase = %.2f rad)', delta(i)));
+                
+                % Save frame
+                frame_path = fullfile(static_dir, sprintf('frame_%03d.png', i));
+                frames{i} = frame_path;
+                saveas(gcf, frame_path);
+            end
+        case 'spiral'
+            % Spiral formation animation
+            t = linspace(0, 15, 1000);
+            
+            % Create frames
+            for i = 1:num_frames
+                % Calculate max time for this frame
+                max_t = (i/num_frames) * 15;
+                t_visible = t(t <= max_t);
+                
+                % Calculate spiral coordinates
+                r = 0.1 * t_visible;
+                x = r .* cos(t_visible);
+                y = r .* sin(t_visible);
+                
+                % Plot
+                clf;
+                plot(x, y, 'm-', 'LineWidth', 2);
+                axis([-1.2 1.2 -1.2 1.2]);
+                grid on;
+                axis equal;
+                title(sprintf('Spiral Formation (t = %.2f)', max_t));
+                
+                % Save frame
+                frame_path = fullfile(static_dir, sprintf('frame_%03d.png', i));
+                frames{i} = frame_path;
+                saveas(gcf, frame_path);
+            end
         otherwise
-            error('Unknown animation type. Try "pendulum", "wave", or "orbit"');
+            error('Unknown animation type. Try "pendulum", "wave", "orbit", "lissajous", or "spiral"');
     end
     
     % End of animation frame generation, debugging output
@@ -354,18 +413,31 @@ function result = animation(animation_type, num_frames)
         fprintf('Frame %d: %s\n', i, frames{i});
     end
     
-    % Create the result structure
-    result.frames = frames;
+    % Save the summary plot as the thumbnail
+    result.thumbnail = fullfile(static_dir, 'thumbnail.png');
+    print(fig, result.thumbnail, '-dpng', '-r100');
+    fprintf('Saved thumbnail: %s\n', result.thumbnail);
+    
+    % Create the result structure with URLs instead of file paths
+    frame_urls = cell(1, num_frames);
+    for i = 1:length(frames)
+        % Convert the file path to a URL (/static/animation/frame_xxx.png)
+        [~, name, ext] = fileparts(frames{i});
+        frame_urls{i} = ['/static/animation/', name, ext];
+    end
+    
+    result.frames = frame_urls;
     result.num_frames = num_frames;
+    
+    % Also convert thumbnail to URL
+    [~, thumb_name, thumb_ext] = fileparts(result.thumbnail);
+    result.thumbnail = ['/static/animation/', thumb_name, thumb_ext];
     
     % Add MATLAB signature
     axes('Position', [0.01, 0.01, 0.1, 0.05], 'Visible', 'off');
     text(0, 0, 'MATLAB', 'FontSize', 8, 'Color', [0.8, 0, 0], 'FontWeight', 'bold');
     
-    % Save the summary plot as the thumbnail
-    result.thumbnail = fullfile(temp_dir, 'thumbnail.png');
-    print(fig, result.thumbnail, '-dpng', '-r100');
-    fprintf('Saved thumbnail: %s\n', result.thumbnail);
+    % Thumbnail already saved and processed
     
     % Close the figure
     close(fig);

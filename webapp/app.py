@@ -6,9 +6,12 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import base64
-from io import BytesIO
+import time
 import json
 import tempfile
+from io import BytesIO
+import matlab.engine
+import shutil
 from PIL import Image
 
 # Add path to find MATLAB example code
@@ -23,19 +26,23 @@ try:
 except ImportError:
     # Try relative import 
     try:
-        from .matlab_bridge import call_matlab_function, get_matlab_source
+        from .matlab_bridge import call_matlab_function, get_matlab_source, get_matlab_engine
     except ImportError:
         # Last resort: direct import with path modification
         current_dir = os.path.dirname(os.path.abspath(__file__))
         if current_dir not in sys.path:
             sys.path.insert(0, current_dir)
-        from matlab_bridge import call_matlab_function, get_matlab_source
+        from matlab_bridge import call_matlab_function, get_matlab_source, get_matlab_engine
 
 app = Flask(__name__)
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/symbolic')
+def symbolic_page():
+    return render_template('symbolic.html')
 
 @app.route('/source_code/<function_name>')
 def source_code(function_name):
@@ -159,27 +166,39 @@ def image_processing():
             'message': str(e)
         })
 
-@app.route('/animation', methods=['POST'])
-def animation_endpoint():
+
+
+@app.route('/source_code/<function_name>')
+def get_source_code(function_name):
+    """Retrieve the source code for a specific MATLAB function"""
     try:
-        # Get parameters from the request
-        data = request.json
+        # Sanitize function name (basic security measure)
+        safe_chars = set('abcdefghijklmnopqrstuvwxyz_')
+        if not all(c in safe_chars for c in function_name.lower()):
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid function name'
+            }), 400
         
-        # Call the function through our bridge
-        result = call_matlab_function('animation', data)
+        # Get source code
+        source_code = get_matlab_source(function_name)
         
-        # Return the result
-        return jsonify({
-            'status': 'success',
-            'frames': result.get('frames'),
-            'source_code': result.get('source_code'),
-            'animation_type': result.get('animation_type')
-        })
+        if source_code is not None:
+            return jsonify({
+                'status': 'success',
+                'source_code': source_code
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': f'Source code for {function_name} not found'
+            }), 404
     except Exception as e:
+        print(f"Error in source_code endpoint: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e)
-        })
+        }), 500
 
 @app.route('/matrix_operation', methods=['POST'])
 def matrix_operation():
@@ -293,6 +312,7 @@ def api_differential_equation():
             })
     except Exception as e:
         import traceback
+        print(f"Animation error: {e}")
         traceback.print_exc()
         return jsonify({
             'status': 'error',
@@ -302,77 +322,87 @@ def api_differential_equation():
 @app.route('/api/animation', methods=['GET'])
 def api_animation():
     try:
-        # Get parameters from the request
         animation_type = request.args.get('animation_type', 'pendulum')
         num_frames = request.args.get('num_frames', 20)
-        speed = request.args.get('speed', 1)
+        result = call_matlab_function('animation', {'animation_type': animation_type, 'num_frames': int(num_frames)})
         
-        print(f"Animation request: type={animation_type}, frames={num_frames}, speed={speed}")
+        # Debug what we got back from MATLAB
+        print(f"Raw result type: {type(result)}")
+        if isinstance(result, dict):
+            print(f"Result keys: {list(result.keys())}")
+            if 'data' in result:
+                print(f"Result contains 'data' key, type: {type(result['data'])}")
+                if isinstance(result['data'], dict) and 'frames' in result['data']:
+                    print(f"result['data']['frames'] type: {type(result['data']['frames'])}, length: {len(result['data']['frames']) if hasattr(result['data']['frames'], '__len__') else 'no length'}")
+            if 'frames' in result:
+                print(f"Direct 'frames' key exists, type: {type(result['frames'])}, length: {len(result['frames']) if hasattr(result['frames'], '__len__') else 'no length'}")
+                if len(result['frames']) > 0:
+                    print(f"First frame: {result['frames'][0]}")
         
-        # Call the MATLAB function through our bridge
-        result = call_matlab_function('animation', 
-                                    {'animation_type': animation_type, 
-                                     'num_frames': int(num_frames)})
-        
-        print(f"Raw animation result keys: {result.keys()}")
-        
-        # Check all possible data formats from the MATLAB function
-        frames = None
-        
-        # Format 1: Direct 'frames' key (ideal case)
-        if 'frames' in result and result['frames']:
-            frames = result['frames']
-            print(f"Found {len(frames)} frames in 'frames' key")
-            
-        # Format 2: Nested inside 'data' key (actual case based on logs)
-        elif 'data' in result:
-            data_obj = result['data']
-            print(f"Found 'data' key, type: {type(data_obj)}")
-            
-            # Examine data object attributes
-            if hasattr(data_obj, 'frames'):
-                print(f"data.frames exists, type: {type(data_obj.frames)}")
-                # Check if it's a cell array or list
-                try:
-                    if hasattr(data_obj.frames, '_data'):  # MATLAB cell array
-                        frames = [frame for frame in data_obj.frames]
-                    else:  # Regular list or array
-                        frames = list(data_obj.frames)
-                    print(f"Extracted {len(frames)} frames from data.frames")
-                except Exception as e:
-                    print(f"Error extracting frames: {e}")
-            
-            # Just in case, print all available attributes
-            print("All attributes of data object:")
-            for attr in dir(data_obj):
-                if not attr.startswith('_'):
-                    print(f"  {attr}: {type(getattr(data_obj, attr))}")
-        
-        # Return animation data with detailed logging
-        if frames and len(frames) > 0:
-            print(f"Animation generated successfully: {len(frames)} frames")
-            # For debugging, print the first frame path
-            if len(frames) > 0:
-                print(f"First frame: {frames[0][:100]}...")
-                
-            response_data = {
-                'frames': frames,
-                'thumbnail': result.get('thumbnail', frames[0] if frames else None),
-                'title': getattr(result.get('data', {}), 'title', 'Animation') if 'data' in result else result.get('title', 'Animation'),
-                'description': getattr(result.get('data', {}), 'description', '') if 'data' in result else result.get('description', '')
-            }
-            return jsonify(response_data)
-        else:
-            # Check if there's any fallback animation data
-            print(f"No frames found in result: {result.keys()}")
-            return jsonify({
-                'status': 'error',
-                'message': 'No animation frames received'
-            })
+        frames = []
+        if isinstance(result, dict):
+            if 'frames' in result and isinstance(result['frames'], (list, tuple)):
+                frames = [str(f) for f in result['frames']]
+            elif 'data' in result and isinstance(result['data'], dict) and 'frames' in result['data']:
+                frames = [str(f) for f in result['data']['frames']]
+
+
+        response_data = {
+            'frames': frames,
+            'thumbnail': result.get('thumbnail', ''),
+            'description': result.get('description', ''),
+            'num_frames': len(frames),
+            'title': result.get('title', 'Animation') if isinstance(result, dict) else ''
+        }
+        print(f"Returning animation response: {response_data}")
+        return jsonify(response_data)
     except Exception as e:
         import traceback
-        print(f"Animation error: {e}")
         traceback.print_exc()
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/symbolic', methods=['POST'])
+def symbolic_operation():
+    try:
+        # Get parameters from the request
+        data = request.get_json()
+        expression = data.get('expression')
+        operation = data.get('operation')
+
+        # Create parameters for symbolic operations - need to use positional arguments instead of keyword arguments for MATLAB
+        # The call_matlab_function handles conversion between Python objects and MATLAB objects
+        # For our symbolic_math function, we have these parameters: (expression, operation, plot_path)
+        
+        # Prepare plot path for plot operation
+        plot_path = None
+        if operation == 'plot':
+            plots_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'plots')
+            os.makedirs(plots_dir, exist_ok=True)
+            plot_filename = f'symbolic_plot_{int(time.time())}.png'
+            plot_path = os.path.join(plots_dir, plot_filename).replace('\\', '/')
+
+        # Use the existing call_matlab_function mechanism that's already imported and working
+        # Call with positional arguments instead of a dictionary for MATLAB compatibility
+        result = call_matlab_function('symbolic_math', {
+            'arg1': expression,  # First positional arg: expression
+            'arg2': operation,   # Second positional arg: operation
+            'arg3': plot_path    # Third positional arg: plot_path (None for non-plot operations)
+        })
+
+        if result and 'status' in result and result['status'] == 'success':
+            return jsonify({
+                'status': 'success',
+                'result': result.get('result', ''),
+                'latex': result.get('latex', ''),
+                'plot': result.get('plot', None)
+            })
+        else:
+            # Handle error from MATLAB function
+            return jsonify({
+                'status': 'error',
+                'message': result.get('message', 'Error processing symbolic math operation')
+            })
+    except Exception as e:
         return jsonify({
             'status': 'error',
             'message': str(e)

@@ -13,19 +13,71 @@
 }
 
 .animation-controls {
-    margin-top: 10px;
+    margin-top: 20px; /* Increased margin to ensure buttons are visible */
     padding: 10px;
     background-color: #f8f9fa;
     border-radius: 8px;
+    clear: both; /* Ensure controls appear below the animation */
 }
 
 .animation-info {
     margin-bottom: 15px;
 }
 
+/* Animation frame container and images */
+#animationFrames {
+    min-height: 400px;
+    margin-bottom: 30px;
+    overflow: visible; /* Ensure content doesn't get cut off */
+}
+
+#animationFrames img {
+    max-width: 100%;
+    height: auto;
+    max-height: 400px;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Animation controls styling */
+#animationControls {
+    margin-top: 30px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #eaf7ff;
+    border-radius: 8px;
+    border: 2px solid #007bff;
+    position: relative;
+    z-index: 100;
+    display: block !important; /* Force display */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Current frame counter */
+#currentFrame {
+    display: inline-block;
+    padding: 5px 10px;
+    background: #e9ecef;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* Result card adaptations */
+.card-body {
+    overflow: visible;
+    padding-bottom: 40px; /* Extra padding at bottom for controls */
+    min-height: 600px; /* Make card taller */
+}
+
 /* Add some responsive behavior */
 @media (max-width: 768px) {
     .animation-container {
         padding: 10px;
+    }
+    
+    #animationFrames img {
+        max-height: 250px; /* Smaller on mobile */
     }
 } 

@@ -2,45 +2,37 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize syntax highlighting
     hljs.highlightAll();
     
-    // Update range input displays
-    document.getElementById('noiseLevel').addEventListener('input', function() {
-        document.getElementById('noiseLevelValue').textContent = this.value;
-    });
+    // Check if we're on the symbolic page or main page
+    const isSymbolicPage = window.location.pathname.includes('/symbolic');
     
-    document.getElementById('numFrames').addEventListener('input', function() {
-        document.getElementById('numFramesValue').textContent = this.value;
-    });
-    
-    document.getElementById('animationSpeed').addEventListener('input', function() {
-        document.getElementById('speedValue').textContent = this.value + 'x';
-    });
-    
-    // Simple Plot
-    setupSimplePlot();
-    
-    // Advanced Plot
-    setupAdvancedPlot();
-    
-    // Differential Equations
-    setupDifferentialEquations();
-    
-    // Image Processing
-    setupImageProcessing();
-    
-    // Animation
-    setupAnimation();
-    
-    // Matrix Operations
-    setupMatrixOperations();
-    
-    // Toggle between result and code views
-    setupResultCodeToggles();
+    if (!isSymbolicPage) {
+        // Main page initialization
+        setupSimplePlot();
+        setupAdvancedPlot();
+        setupDifferentialEquations();
+        setupImageProcessing();
+        setupResultCodeToggles();
+    } else {
+        // Symbolic page initialization
+        setupSymbolicMath();
+    }
 });
 
 // Function to handle API errors
 function handleApiError(error) {
     console.error('API Error:', error);
     alert('Error: ' + error.message || 'Unknown error occurred');
+}
+
+// Function to escape HTML content
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 // Function to toggle between result and code views
@@ -58,6 +50,11 @@ function setupResultCodeToggles() {
         document.getElementById('simpleCodeContainer').style.display = 'block';
         document.getElementById('simpleResultBtn').classList.remove('active');
         document.getElementById('simpleCodeBtn').classList.add('active');
+        
+        // Load MATLAB source code if not already loaded
+        if (!document.getElementById('simpleCode').textContent.trim()) {
+            loadMatlabSourceCode('simple_plot', 'simpleCode');
+        }
     });
     
     // Advanced Plot
@@ -73,6 +70,11 @@ function setupResultCodeToggles() {
         document.getElementById('advancedCodeContainer').style.display = 'block';
         document.getElementById('advancedResultBtn').classList.remove('active');
         document.getElementById('advancedCodeBtn').classList.add('active');
+        
+        // Load MATLAB source code if not already loaded
+        if (!document.getElementById('advancedCode').textContent.trim()) {
+            loadMatlabSourceCode('advanced_plot', 'advancedCode');
+        }
     });
     
     // Differential Equations
@@ -90,6 +92,11 @@ function setupResultCodeToggles() {
         document.getElementById('equationDisplay').style.display = 'none';
         document.getElementById('differentialResultBtn').classList.remove('active');
         document.getElementById('differentialCodeBtn').classList.add('active');
+        
+        // Load MATLAB source code if not already loaded
+        if (!document.getElementById('differentialCode').textContent.trim()) {
+            loadMatlabSourceCode('differential_equation', 'differentialCode');
+        }
     });
     
     // Image Processing
@@ -107,6 +114,32 @@ function setupResultCodeToggles() {
         document.getElementById('imageInfo').style.display = 'none';
         document.getElementById('imageResultBtn').classList.remove('active');
         document.getElementById('imageCodeBtn').classList.add('active');
+        
+        // Load MATLAB source code if not already loaded
+        if (!document.getElementById('imageCode').textContent.trim()) {
+            loadMatlabSourceCode('image_processing', 'imageCode');
+        }
+    });
+    
+    // Animation
+    document.getElementById('animationResultBtn').addEventListener('click', function() {
+        document.getElementById('animationContainer').style.display = 'block';
+        document.getElementById('animationCodeContainer').style.display = 'none';
+        document.getElementById('animationResultBtn').classList.add('active');
+        document.getElementById('animationCodeBtn').classList.remove('active');
+    });
+    
+    document.getElementById('animationCodeBtn').addEventListener('click', function() {
+        document.getElementById('animationContainer').style.display = 'none';
+        document.getElementById('animationCodeContainer').style.display = 'block';
+        document.getElementById('animationResultBtn').classList.remove('active');
+        document.getElementById('animationCodeBtn').classList.add('active');
+        
+        // Load MATLAB source code based on selected animation type
+        const animationType = document.getElementById('animationType').value || 'pendulum';
+        if (!document.getElementById('animationCode').textContent.trim()) {
+            loadMatlabSourceCode('animation', 'animationCode');
+        }
     });
     
     // Animation
@@ -179,8 +212,9 @@ function generateSimplePlot(useMatlab) {
             
             // Update code if available
             if (data.source_code) {
-                document.getElementById('simpleCode').textContent = data.source_code;
-                hljs.highlightElement(document.getElementById('simpleCode'));
+                const codeElement = document.getElementById('simpleCode');
+                codeElement.textContent = escapeHtml(data.source_code);
+                hljs.highlightElement(codeElement);
             }
         } else {
             throw new Error(data.message || 'Unknown error');
@@ -242,8 +276,9 @@ function generateAdvancedPlot(useMatlab) {
             
             // Update code if available
             if (data.source_code) {
-                document.getElementById('advancedCode').textContent = data.source_code;
-                hljs.highlightElement(document.getElementById('advancedCode'));
+                const codeElement = document.getElementById('advancedCode');
+                codeElement.textContent = escapeHtml(data.source_code);
+                hljs.highlightElement(codeElement);
             }
         } else {
             throw new Error(data.message || 'Unknown error');
@@ -302,8 +337,9 @@ function generateDifferentialEquation() {
             
             // Update code if available
             if (data.source_code) {
-                document.getElementById('differentialCode').textContent = data.source_code;
-                hljs.highlightElement(document.getElementById('differentialCode'));
+                const codeElement = document.getElementById('differentialCode');
+                codeElement.textContent = escapeHtml(data.source_code);
+                hljs.highlightElement(codeElement);
             }
         } else {
             throw new Error(data.message || 'Unknown error');
@@ -361,8 +397,9 @@ function generateImageProcessing() {
             
             // Update code if available
             if (data.source_code) {
-                document.getElementById('imageCode').textContent = data.source_code;
-                hljs.highlightElement(document.getElementById('imageCode'));
+                const codeElement = document.getElementById('imageCode');
+                codeElement.textContent = escapeHtml(data.source_code);
+                hljs.highlightElement(codeElement);
             }
         } else {
             throw new Error(data.message || 'Unknown error');
@@ -526,71 +563,120 @@ function setupAnimation() {
     });
 }
 
-// Setup Matrix Operations
-function setupMatrixOperations() {
-    document.getElementById('matrixOperationBtn').addEventListener('click', function() {
-        generateMatrixOperation(false);
-    });
+// Function to load MATLAB source code
+function loadMatlabSourceCode(functionName, elementId) {
+    const targetElement = document.getElementById(elementId);
+    if (!targetElement) {
+        console.error(`Element with ID ${elementId} not found`);
+        return;
+    }
     
-    document.getElementById('matlabMatrixOperationBtn').addEventListener('click', function() {
-        generateMatrixOperation(true);
+    // Add loading indicator
+    targetElement.innerHTML = '<div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div> Loading MATLAB code...';
+    
+    // Fetch source code from server
+    fetch(`/source_code/${functionName}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success' && data.source_code) {
+                // Display the source code with syntax highlighting
+                targetElement.textContent = data.source_code;
+                // Re-initialize syntax highlighting
+                hljs.highlightElement(targetElement);
+                console.log(`Loaded source code for ${functionName}`);
+            } else {
+                // Display error message
+                targetElement.innerHTML = `<div class="alert alert-warning">
+                    <strong>Note:</strong> Could not load MATLAB source code.
+                    ${data.message || 'The source file may not exist.'}
+                </div>`;
+            }
+        })
+        .catch(error => {
+            console.error(`Error loading source code: ${error}`);
+            targetElement.innerHTML = `<div class="alert alert-danger">
+                <strong>Error:</strong> Failed to load source code.
+                ${error.message || 'Unknown error occurred.'}
+            </div>`;
+        });
+}
+
+// Setup Symbolic Math operations
+function setupSymbolicMath() {
+    const form = document.getElementById('symbolic-form');
+    const loadingEl = document.getElementById('symbolic-loading');
+    const resultEl = document.getElementById('symbolic-result');
+    const resultTextEl = document.getElementById('symbolic-result-text');
+    const plotContainer = document.getElementById('symbolic-plot-container');
+    const plotImg = document.getElementById('symbolic-plot');
+    
+    if (!form) return;
+    
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        // Get input values
+        const expression = document.getElementById('symbolic-expression').value.trim();
+        const operation = document.querySelector('input[name="operation"]:checked').value;
+        
+        if (!expression) {
+            alert('Please enter a valid mathematical expression.');
+            return;
+        }
+        
+        // Show loading indicator
+        loadingEl.style.display = 'block';
+        resultEl.style.display = 'none';
+        plotContainer.style.display = 'none';
+        
+        // Send request to backend
+        fetch('/symbolic', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                expression: expression,
+                operation: operation
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading indicator
+            loadingEl.style.display = 'none';
+            
+            if (data.status === 'success') {
+                // Show result
+                resultEl.style.display = 'block';
+                
+                // Display LaTeX if available, otherwise plain text
+                if (data.latex) {
+                    resultTextEl.innerHTML = '\\[' + data.latex + '\\]';
+                    // Render LaTeX if MathJax is available
+                    if (window.MathJax) {
+                        MathJax.typeset();
+                    }
+                } else {
+                    resultTextEl.textContent = data.result;
+                }
+                
+                // Display plot if available
+                if (data.plot && operation === 'plot') {
+                    plotContainer.style.display = 'flex';
+                    plotImg.src = 'data:image/png;base64,' + data.plot;
+                }
+            } else {
+                resultEl.style.display = 'block';
+                resultTextEl.innerHTML = `<div class="alert alert-danger">\n                    <strong>Error:</strong> ${data.message || 'An error occurred while processing your request.'}\n                </div>`;
+            }
+        })
+        .catch(error => {
+            loadingEl.style.display = 'none';
+            resultEl.style.display = 'block';
+            resultTextEl.innerHTML = `<div class="alert alert-danger">\n                <strong>Error:</strong> ${error.message || 'An error occurred while processing your request.'}\n            </div>`;
+            console.error('Symbolic math error:', error);
+        });
     });
 }
 
-function generateMatrixOperation(useMatlab) {
-    // Show loading spinner
-    document.getElementById('matrixLoading').style.display = 'block';
-    document.getElementById('matrixResult').style.display = 'none';
-    
-    // Get parameters
-    const params = {
-        operation_type: document.getElementById('operationType').value,
-        matrix_size: parseInt(document.getElementById('matrixSize').value),
-        random_seed: parseInt(document.getElementById('randomSeed').value)
-    };
-    
-    // Determine endpoint and request data
-    let endpoint = useMatlab ? '/matlab_plot' : '/matrix_operation';
-    let requestData = useMatlab ? 
-        { function: 'matrix_operation', params: params } : 
-        params;
-    
-    // Send request
-    fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            // Hide loading indicator
-            document.getElementById('matrixLoading').style.display = 'none';
-            
-            // Display result
-            if (data.plot) {
-                const resultImage = document.getElementById('matrixResult');
-                resultImage.src = 'data:image/png;base64,' + data.plot;
-                resultImage.style.display = 'block';
-            }
-            
-            // Display matrix information
-            if (data.operation_info) {
-                document.getElementById('matrixOperationTitle').textContent = data.operation_info.title || params.operation_type;
-                document.getElementById('matrixInfoText').textContent = data.operation_info.details || '';
-                document.getElementById('matrixInfo').style.display = 'block';
-            }
-            
-            // Update code if available
-            if (data.source_code) {
-                document.getElementById('matrixCode').textContent = data.source_code;
-                hljs.highlightElement(document.getElementById('matrixCode'));
-            }
-        } else {
-            throw new Error(data.message || 'Unknown error');
-        }
-    })
-    .catch(handleApiError);
-} 
+ 

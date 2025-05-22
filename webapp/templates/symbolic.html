@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symbolic Math - MATLAB-Python Integration</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Syntax highlighting for code -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        :root {
+            --matlab-blue: #0076A8;
+            --matlab-orange: #F28C28;
+            --matlab-light-blue: #E8F4F8;
+            --python-blue: #306998;
+            --python-yellow: #FFE873;
+        }
+        
+        .hero-section {
+            background-color: var(--matlab-blue);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+        
+        .hero-title {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .matlab-header {
+            background-color: var(--matlab-blue);
+        }
+        
+        .latex-output {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Cambria Math', serif;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--matlab-blue);">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fab fa-python me-2"></i><i class="fas fa-plus-circle mx-1"></i><i class="fas fa-square-root-alt me-2"></i> MATLAB-Python
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#examples">Examples</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/symbolic">Symbolic Math</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <h1 class="hero-title">Symbolic Mathematics</h1>
+            <p class="hero-subtitle">Harness the power of MATLAB's Symbolic Math Toolbox</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-md-7">
+                <div class="card">
+                    <div class="card-header matlab-header">
+                        <h5 class="mb-0 text-white">Symbolic Mathematics with MATLAB</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Enter a mathematical expression and select an operation to perform using MATLAB's Symbolic Math Toolbox.</p>
+                        <form id="symbolic-form" class="mb-3">
+                            <div class="mb-3">
+                                <label for="symbolic-expression" class="form-label">Expression (in terms of x):</label>
+                                <input type="text" class="form-control" id="symbolic-expression" placeholder="Example: x^2 + sin(x)">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Operation:</label>
+                                <div class="d-flex flex-wrap">
+                                    <div class="form-check me-3 mb-2">
+                                        <input class="form-check-input" type="radio" name="operation" id="op-simplify" value="simplify" checked>
+                                        <label class="form-check-label" for="op-simplify">Simplify</label>
+                                    </div>
+                                    <div class="form-check me-3 mb-2">
+                                        <input class="form-check-input" type="radio" name="operation" id="op-differentiate" value="differentiate">
+                                        <label class="form-check-label" for="op-differentiate">Differentiate</label>
+                                    </div>
+                                    <div class="form-check me-3 mb-2">
+                                        <input class="form-check-input" type="radio" name="operation" id="op-integrate" value="integrate">
+                                        <label class="form-check-label" for="op-integrate">Integrate</label>
+                                    </div>
+                                    <div class="form-check me-3 mb-2">
+                                        <input class="form-check-input" type="radio" name="operation" id="op-solve" value="solve">
+                                        <label class="form-check-label" for="op-solve">Solve (= 0)</label>
+                                    </div>
+                                    <div class="form-check me-3 mb-2">
+                                        <input class="form-check-input" type="radio" name="operation" id="op-plot" value="plot">
+                                        <label class="form-check-label" for="op-plot">Plot</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-matlab">Calculate</button>
+                        </form>
+                        
+                        <div id="symbolic-loading" class="loading">
+                            <div class="loading-spinner"></div>
+                            <p>Processing with MATLAB...</p>
+                        </div>
+                        
+                        <div id="symbolic-result" class="mt-4" style="display: none;">
+                            <h5>Result:</h5>
+                            <div id="symbolic-result-text" class="latex-output"></div>
+                        </div>
+                        
+                        <div id="symbolic-plot-container" class="plot-container mt-4" style="display: none;">
+                            <img id="symbolic-plot" class="plot-img" src="" alt="Plot of the function">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">How It Works</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>This page demonstrates how to leverage MATLAB's powerful Symbolic Math Toolbox directly from a web application using the MATLAB Engine for Python.</p>
+                        <h6>Features:</h6>
+                        <ul>
+                            <li><strong>Simplify:</strong> Simplifies complex mathematical expressions</li>
+                            <li><strong>Differentiate:</strong> Computes the derivative with respect to x</li>
+                            <li><strong>Integrate:</strong> Computes the indefinite integral with respect to x</li>
+                            <li><strong>Solve:</strong> Finds the roots of the equation (where expression = 0)</li>
+                            <li><strong>Plot:</strong> Visualizes the function over a suitable domain</li>
+                        </ul>
+                        <div class="code-container">
+                            <pre><code class="language-matlab">% MATLAB Code Example
+syms x;
+expr = x^2 + sin(x);
+
+% Differentiate
+diff(expr)
+
+% Integrate
+int(expr)
+
+% Solve
+solve(expr == 0)</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Example Expressions</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Try these examples:</h6>
+                        <ul>
+                            <li><code>x^2 + sin(x)</code> - Basic expression</li>
+                            <li><code>exp(x) * cos(x)</code> - Exponential with trigonometry</li>
+                            <li><code>log(x) / x</code> - Logarithmic expression</li>
+                            <li><code>x^3 - 6*x^2 + 11*x - 6</code> - Polynomial</li>
+                            <li><code>tan(x) - x</code> - For solving transcendental equations</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>MATLAB-Python Integration Demo</h4>
+                    <p>An educational tool for demonstrating how to integrate MATLAB with Python in web applications.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Resources</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="https://www.mathworks.com/help/matlab/matlab-engine-for-python.html" class="text-white" target="_blank">MATLAB Engine for Python</a></li>
+                        <li><a href="https://www.mathworks.com/help/symbolic/" class="text-white" target="_blank">Symbolic Math Toolbox</a></li>
+                        <li><a href="https://www.python.org/doc/" class="text-white" target="_blank">Python Documentation</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Created For</h5>
+                    <p>Educational purposes to demonstrate the integration capabilities between MATLAB and Python.</p>
+                </div>
+            </div>
+            <hr class="my-4 bg-light">
+            <div class="text-center">
+                <p>© 2025 MATLAB-Python Integration Demo | Created for Educational Purposes</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Highlight.js for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/matlab.min.js"></script>
+    
+    <!-- MathJax for LaTeX rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize syntax highlighting
+            hljs.highlightAll();
+        });
+    </script>
+</body>
+</html>
