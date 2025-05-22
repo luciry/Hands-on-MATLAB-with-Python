@@ -152,6 +152,27 @@ def call_matlab_function(function_name, params=None):
                     # Debug direct result to see structure
                     print(f"Direct MATLAB result type: {type(result)}")
                     print(f"Result attributes: {[attr for attr in dir(result) if not attr.startswith('_')]}")
+                    print(f"Raw symbolic_math result keys: {dict(result).keys() if isinstance(result, dict) else 'Not a dict'}")
+                    
+                    # For symbolic math, just return the result dict as-is
+                    if isinstance(result, dict):
+                        return result
+                    else:
+                        # If not a dict, try to convert to dict (for MATLAB struct)
+                        try:
+                            result_dict = {k: getattr(result, k) for k in dir(result) if not k.startswith('_')}
+                            return result_dict
+                        except Exception as e:
+                            return {'status': 'error', 'message': f'Could not process MATLAB symbolic_math result: {str(e)}'}
+                elif function_name == "animation":
+                    animation_type = params.get('animation_type', 'pendulum')
+                    num_frames = params.get('num_frames', 20)
+                    print(f"Calling MATLAB animation: type={animation_type}, frames={num_frames}")
+                    result = eng.animation(animation_type, float(num_frames))
+                    
+                    # Debug direct result to see structure
+                    print(f"Direct MATLAB result type: {type(result)}")
+                    print(f"Result attributes: {[attr for attr in dir(result) if not attr.startswith('_')]}")
                     print(f"Raw animation result keys: {dict(result).keys() if isinstance(result, dict) else 'Not a dict'}")
                     
                     # Process animation result
