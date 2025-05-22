@@ -225,32 +225,7 @@ def matrix_operation():
             'message': str(e)
         })
 
-@app.route('/matlab_plot', methods=['POST'])
-def matlab_plot():
-    try:
-        # Get parameters from the request
-        data = request.json
-        function_name = data.get('function', 'simple_plot')
-        params = data.get('params', {})
-        
-        # Call the MATLAB function through our bridge
-        result = call_matlab_function(function_name, params)
-        
-        # Important fix: Flatten the result structure for the frontend
-        response = {'status': 'success'}
-        # Add all keys from result to the response
-        if isinstance(result, dict):
-            for key, value in result.items():
-                response[key] = value
-        
-        return jsonify(response)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        })
+
 
 @app.route('/api/image_processing', methods=['GET'])
 def api_image_processing():
@@ -403,6 +378,31 @@ def symbolic_operation():
                 'message': result.get('message', 'Error processing symbolic math operation')
             })
     except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        })
+@app.route('/matlab_plot', methods=['POST'])
+def matlab_plot():
+    try:
+        # Get parameters from the request
+        data = request.json
+        function_name = data.get('function', 'simple_plot')
+        params = data.get('params', {})
+        
+        # Call the MATLAB function through our bridge
+        result = call_matlab_function(function_name, params)
+        
+        # Flatten the result structure for the frontend
+        response = {'status': 'success'}
+        if isinstance(result, dict):
+            for key, value in result.items():
+                response[key] = value
+        
+        return jsonify(response)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'status': 'error',
             'message': str(e)

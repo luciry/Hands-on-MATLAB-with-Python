@@ -225,16 +225,12 @@ function generateSimplePlot(useMatlab) {
 
 // Setup Advanced Plot
 function setupAdvancedPlot() {
-    document.getElementById('advancedPlotBtn').addEventListener('click', function() {
-        generateAdvancedPlot(false);
-    });
-    
     document.getElementById('matlabAdvancedPlotBtn').addEventListener('click', function() {
         generateAdvancedPlot(true);
     });
 }
 
-function generateAdvancedPlot(useMatlab) {
+function generateAdvancedPlot() {
     // Show loading spinner
     document.getElementById('advancedPlotLoading').style.display = 'block';
     document.getElementById('advancedPlotImage').style.display = 'none';
@@ -248,10 +244,8 @@ function generateAdvancedPlot(useMatlab) {
     };
     
     // Determine endpoint and request data
-    let endpoint = useMatlab ? '/matlab_plot' : '/advanced_plot';
-    let requestData = useMatlab ? 
-        { function: 'advanced_plot', params: params } : 
-        params;
+    let endpoint = '/matlab_plot';
+    let requestData = { function: 'advanced_plot', params: params };
     
     // Send request
     fetch(endpoint, {
