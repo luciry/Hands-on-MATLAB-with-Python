@@ -60,6 +60,12 @@ def source_code(function_name):
             'message': f'Source code for {function_name} not found'
         })
 
+# Here we can find POST requests to MATLAB functions
+# They work like this:
+# 1. We get the function name and parameters from the request
+# 2. We call the function through our bridge
+# 3. We return the result
+
 @app.route('/simple_plot', methods=['POST'])
 def simple_plot():
     try:
@@ -358,6 +364,10 @@ def symbolic_operation():
 
         # Use the existing call_matlab_function mechanism that's already imported and working
         # Call with positional arguments instead of a dictionary for MATLAB compatibility
+        print("Calling MATLAB function: symbolic_math with params: {params}")
+        print("Expression: ", expression)
+        print("Operation: ", operation)
+        print("Plot path: ", plot_path)
         result = call_matlab_function('symbolic_math', {
             'arg1': expression,  # First positional arg: expression
             'arg2': operation,   # Second positional arg: operation

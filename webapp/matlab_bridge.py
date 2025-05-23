@@ -11,6 +11,7 @@ from PIL import Image
 # Try to import MATLAB engine
 try:
     import matlab.engine
+    _matlab_engine = matlab.engine.start_matlab()
     MATLAB_AVAILABLE = True
 except ImportError:
     MATLAB_AVAILABLE = False
@@ -139,7 +140,7 @@ def call_matlab_function(function_name, params=None):
                     # Create a MATLAB struct for parameters - symbolic_math.m expects a single struct parameter
                     matlab_params = {}
                     matlab_params['expression'] = expression
-                    matlab_params['operation'] = operation
+                    matlab_params['operation'] = operation  
                     if plot_path:
                         matlab_params['plot_path'] = plot_path
                     
