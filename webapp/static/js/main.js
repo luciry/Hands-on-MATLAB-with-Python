@@ -17,13 +17,11 @@ document.addEventListener('DOMContentLoaded', function() {
         setupSymbolicMath();
     }
 });
-
 // Function to handle API errors
 function handleApiError(error) {
     console.error('API Error:', error);
     alert('Error: ' + error.message || 'Unknown error occurred');
 }
-
 // Function to escape HTML content
 function escapeHtml(unsafe) {
     if (!unsafe) return '';
@@ -34,7 +32,6 @@ function escapeHtml(unsafe) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
-
 // Function to toggle between result and code views
 function setupResultCodeToggles() {
     // Simple Plot
@@ -159,7 +156,6 @@ function setupResultCodeToggles() {
         document.getElementById('animationCodeBtn').classList.add('active');
     });
 }
-
 // Setup Simple Plot
 function setupSimplePlot() {
     document.getElementById('simplePlotBtn').addEventListener('click', function() {
@@ -170,7 +166,6 @@ function setupSimplePlot() {
         generateSimplePlot(true);
     });
 }
-
 function generateSimplePlot(useMatlab) {
     // Show loading spinner
     document.getElementById('simplePlotLoading').style.display = 'block';
@@ -222,14 +217,12 @@ function generateSimplePlot(useMatlab) {
     })
     .catch(handleApiError);
 }
-
 // Setup Advanced Plot
 function setupAdvancedPlot() {
     document.getElementById('matlabAdvancedPlotBtn').addEventListener('click', function() {
         generateAdvancedPlot(true);
     });
 }
-
 function generateAdvancedPlot() {
     // Show loading spinner
     document.getElementById('advancedPlotLoading').style.display = 'block';
@@ -280,14 +273,12 @@ function generateAdvancedPlot() {
     })
     .catch(handleApiError);
 }
-
 // Setup Differential Equations
 function setupDifferentialEquations() {
     document.getElementById('differentialBtn').addEventListener('click', function() {
         generateDifferentialEquation();
     });
 }
-
 function generateDifferentialEquation() {
     // Show loading spinner
     document.getElementById('differentialLoading').style.display = 'block';
@@ -341,14 +332,12 @@ function generateDifferentialEquation() {
     })
     .catch(handleApiError);
 }
-
 // Setup Image Processing
 function setupImageProcessing() {
     document.getElementById('imageProcessingBtn').addEventListener('click', function() {
         generateImageProcessing();
     });
 }
-
 function generateImageProcessing() {
     // Show loading spinner
     document.getElementById('imageLoading').style.display = 'block';
@@ -401,7 +390,6 @@ function generateImageProcessing() {
     })
     .catch(handleApiError);
 }
-
 // Setup Animation
 function setupAnimation() {
     const animationBtn = document.getElementById('animationBtn');
@@ -556,7 +544,6 @@ function setupAnimation() {
             });
     });
 }
-
 // Function to load MATLAB source code
 function loadMatlabSourceCode(functionName, elementId) {
     const targetElement = document.getElementById(elementId);
@@ -594,7 +581,6 @@ function loadMatlabSourceCode(functionName, elementId) {
             </div>`;
         });
 }
-
 // Setup Symbolic Math operations
 function setupSymbolicMath() {
     const form = document.getElementById('symbolic-form');

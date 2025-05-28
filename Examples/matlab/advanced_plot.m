@@ -1,15 +1,5 @@
 function result = advanced_plot(function_type, amplitude, frequency, phase, x_min, x_max, num_points)
-    % ADVANCED_PLOT Creates various waveform plots with adjustable parameters
-    %   result = ADVANCED_PLOT(function_type, amplitude, frequency, phase, x_min, x_max, num_points)
-    %   
-    %   Parameters:
-    %     function_type - Type of function to plot ('sin', 'cos', 'tan', 'square')
-    %     amplitude - Amplitude of the wave
-    %     frequency - Frequency of the wave
-    %     phase - Phase shift of the wave
-    %     x_min, x_max - Range of x-axis
-    %     num_points - Number of points to plot
-    
+ 
     % Set default parameters if not provided
     if nargin < 1, function_type = 'sin'; end
     if ~ischar(function_type), function_type = 'sin'; end
